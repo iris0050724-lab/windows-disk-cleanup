@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 磁盘空间体检报告</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e6e8eb; --text:#1f2328; --muted:#6b7280;
+    --safe:#1a7f37; --safe-bg:#e8f5ec; --warn:#9a6700; --warn-bg:#fdf3d8;
+    --danger:#b42318; --danger-bg:#fdeceb; --accent:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px;background:var(--bg);color:var(--text);
+       font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:28px 0 12px;padding-left:10px;border-left:3px solid var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+  .banner{background:var(--danger-bg);border:1px solid #f6c7c3;border-radius:10px;
+          padding:14px 16px;margin-bottom:24px;color:#7a1c14}
+  .banner strong{color:var(--danger)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .kpi .label{color:var(--muted);font-size:12px;margin-bottom:8px}
+  .kpi .value{font-size:24px;font-weight:600}
+  .kpi .foot{color:var(--muted);font-size:12px;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:6px 18px 18px;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;white-space:nowrap}
+  .t-safe{background:var(--safe-bg);color:var(--safe)}
+  .t-move{background:#e8eefc;color:var(--accent)}
+  .t-warn{background:var(--warn-bg);color:var(--warn)}
+  .t-no{background:var(--danger-bg);color:var(--danger)}
+  .bar{height:8px;border-radius:4px;background:#eceef1;overflow:hidden}
+  .bar > span{display:block;height:100%;background:var(--accent)}
+  footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);
+         color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Windows 磁盘空间体检报告</h1>
+  <div class="sub">生成时间：{{DATE}}　|　主机：{{HOST}}　|　扫描模式：只读</div>
+
+  <div class="banner">
+    <strong>⚠️ 清理前请先备份重要数据。</strong>
+    本报告仅为扫描结果，尚未执行任何删除或移动。请逐项确认后再操作。
+    涉及账号凭据、聊天记录、软件日志、许可证等内容请先备份；因清理造成的数据丢失由使用者自行承担。
+  </div>
+
+  <h2>一、磁盘概况</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="label">系统盘总容量</div><div class="value">{{C_TOTAL}} GB</div></div>
+    <div class="kpi"><div class="label">当前可用</div><div class="value">{{C_FREE}} GB</div><div class="foot">{{C_PCT}}% 空闲</div></div>
+    <div class="kpi"><div class="label">健康档位</div><div class="value">{{C_LEVEL}}</div><div class="foot">参考阈值见 references/thresholds.md</div></div>
+    <div class="kpi"><div class="label">数据盘可用</div><div class="value">{{D_FREE}} GB</div><div class="foot">迁移目标盘</div></div>
+  </div>
+
+  <h2>二、空间构成</h2>
+  <div class="card">
+    <table>
+      <tr><th>目录</th><th class="num">体积</th><th style="width:180px">占比</th></tr>
+      <!-- TODO: 由 disk_survey.ps1 输出填入 -->
+      <tr><td>C:\Users</td><td class="num">{{SIZE}} GB</td><td><div class="bar"><span style="width:{{PCT}}%"></span></div></td></tr>
+      <tr><td>C:\Windows</td><td class="num">{{SIZE}} GB</td><td><div class="bar"><span style="width:{{PCT}}%"></span></div></td></tr>
+      <tr><td>C:\Program Files</td><td class="num">{{SIZE}} GB</td><td><div class="bar"><span style="width:{{PCT}}%"></span></div></td></tr>
+      <tr><td>C:\ProgramData</td><td class="num">{{SIZE}} GB</td><td><div class="bar"><span style="width:{{PCT}}%"></span></div></td></tr>
+    </table>
+  </div>
+
+  <h2>三、清理候选清单</h2>
+  <div class="card">
+    <table>
+      <tr><th>路径</th><th class="num">体积</th><th>类别</th><th>建议</th></tr>
+      <!-- TODO: 每一项都要用户确认后才执行 -->
+      <tr>
+        <td>%LOCALAPPDATA%\Temp</td><td class="num">{{SIZE}} GB</td>
+        <td><span class="tag t-safe">白名单</span></td><td>可直接清理</td>
+      </tr>
+      <tr>
+        <td>C:\Users\&lt;user&gt;\AppData\Local\&lt;App&gt;\Cache</td><td class="num">{{SIZE}} GB</td>
+        <td><span class="tag t-move">可迁移</span></td><td>迁移到数据盘（Junction）</td>
+      </tr>
+      <tr>
+        <td>C:\ProgramData\&lt;已卸载软件&gt;</td><td class="num">{{SIZE}} GB</td>
+        <td><span class="tag t-warn">需确认</span></td><td>确认为残留后可清理</td>
+      </tr>
+      <tr>
+        <td>C:\Users\&lt;user&gt;\Documents</td><td class="num">{{SIZE}} GB</td>
+        <td><span class="tag t-no">个人数据</span></td><td>不主动处理，由用户决定</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>四、需要管理员权限的事项</h2>
+  <div class="card">
+    <table>
+      <tr><th>项目</th><th>原因</th><th>处理方式</th></tr>
+      <tr><td>{{PATH}}</td><td>属主为 Administrators</td><td>takeown + icacls 后删除（写入 cleanup_admin.bat）</td></tr>
+      <tr><td>{{REGKEY}}</td><td>HKLM 需提权</td><td>reg delete（写入 cleanup_admin.bat）</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    本报告由 windows-disk-cleanup 技能生成，仅用于辅助决策，不构成任何数据安全保证。<br>
+    执行清理前请务必完成备份（参见 references/backup-checklist.md）。
+  </footer>
+
+</div>
+</body>
+</html>

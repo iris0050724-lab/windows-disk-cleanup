@@ -1,0 +1,16 @@
+# OS / editor cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+
+# Skill packaging output
+dist/
+*.zip
+
+# Local logs produced by the scripts
+*.log
+
+# Personal notes / local overrides
+NOTES.local.md
